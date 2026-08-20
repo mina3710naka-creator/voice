@@ -65,6 +65,15 @@ function transcribe(wavBuffer, settings, { timeoutMs = 90000 } = {}) {
       "-nf",
       "-nth", "0.75",
     ];
+
+    // Biases recognition toward specific spellings (most useful for
+    // people's names and other proper nouns whisper.cpp otherwise tends
+    // to mis-hear as a similar-sounding common word).
+    const vocabulary = (settings.customVocabulary || "").trim();
+    if (vocabulary) {
+      args.push("--prompt", vocabulary);
+    }
+
     const child = spawn(binPath, args, { windowsHide: true });
 
     let stderr = "";

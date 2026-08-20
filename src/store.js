@@ -10,6 +10,7 @@ const DEFAULTS = {
   maxRecordingSeconds: 60,
   whisperBinPath: "",
   whisperModelPath: "",
+  customVocabulary: "",
 };
 
 function load() {

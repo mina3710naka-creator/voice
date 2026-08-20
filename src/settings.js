@@ -6,6 +6,7 @@
   const launchAtLoginEl = document.getElementById("launchAtLogin");
   const cleanupFillersEl = document.getElementById("cleanupFillers");
   const maxSecondsEl = document.getElementById("maxSeconds");
+  const customVocabularyEl = document.getElementById("customVocabulary");
   const engineStatusEl = document.getElementById("engineStatus");
 
   async function refresh() {
@@ -15,6 +16,7 @@
     launchAtLoginEl.checked = !!state.settings.launchAtLogin;
     cleanupFillersEl.checked = !!state.settings.cleanupFillers;
     maxSecondsEl.value = state.settings.maxRecordingSeconds || 60;
+    customVocabularyEl.value = state.settings.customVocabulary || "";
 
     if (state.engineReady) {
       engineStatusEl.innerHTML =
@@ -43,6 +45,7 @@
       launchAtLogin: launchAtLoginEl.checked,
       cleanupFillers: cleanupFillersEl.checked,
       maxRecordingSeconds: Number(maxSecondsEl.value) || 60,
+      customVocabulary: customVocabularyEl.value.trim(),
     });
     await refresh();
   });

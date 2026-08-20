@@ -30,6 +30,11 @@
     width: 80px; background: #0e1122; border: 1px solid var(--border); color: var(--text);
     border-radius: 6px; padding: 7px 9px;
   }
+  textarea {
+    width: 100%; background: #0e1122; border: 1px solid var(--border); color: var(--text);
+    border-radius: 6px; padding: 7px 9px; font-size: 0.82rem; font-family: inherit;
+    resize: vertical; min-height: 60px;
+  }
   .path-row { display: flex; gap: 6px; }
   .path-row input { flex: 1; }
   button {
@@ -73,6 +78,15 @@
     <p class="hint">
       インストーラーに同梱された whisper.cpp を自動的に使用します。より高精度なモデル（例: ggml-small.bin,
       ggml-medium.bin）に切り替えたい場合のみ、ここでパスを指定してください。
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>人名・固有名詞の認識精度を上げる</h2>
+    <textarea id="customVocabulary" placeholder="例: 田中太郎, 佐藤花子, 株式会社サンプル"></textarea>
+    <p class="hint">
+      よく話しかける相手の名前や会社名・固有名詞をカンマ区切りで登録しておくと、
+      音声認識がその表記を優先して聞き取るようになり、人名の誤変換が減ります。
     </p>
   </div>
 
