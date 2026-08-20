@@ -54,7 +54,17 @@ function transcribe(wavBuffer, settings, { timeoutMs = 90000 } = {}) {
 
     fs.writeFileSync(wavPath, Buffer.from(wavBuffer));
 
-    const args = ["-m", modelPath, "-f", wavPath, "-l", "ja", "-nt", "-otxt", "-of", outBase];
+    const args = [
+      "-m", modelPath, "-f", wavPath, "-l", "ja", "-nt", "-otxt", "-of", outBase,
+      // Skip the temperature-fallback retry loop: it's the main source of
+      // both slow transcriptions and hallucinated text (the model tends to
+      // invent words when it retries low-confidence/quiet segments at
+      // higher temperatures). Also raise the no-speech threshold so brief
+      // pauses in natural speech are more readily treated as silence
+      // instead of being transcribed into invented words.
+      "-nf",
+      "-nth", "0.75",
+    ];
     const child = spawn(binPath, args, { windowsHide: true });
 
     let stderr = "";

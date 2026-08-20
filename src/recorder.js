@@ -2,10 +2,9 @@
   "use strict";
 
   const SAMPLE_RATE = 16000;
-  const PREROLL_MS = 500;
-  const PREROLL_SAMPLES = Math.round((SAMPLE_RATE * PREROLL_MS) / 1000);
-  const TARGET_PEAK = 0.9;
-  const MAX_GAIN = 8;
+  const TARGET_PEAK = 0.85;
+  const MAX_GAIN = 3;
+  const SILENCE_PEAK = 0.03;
 
   let audioContext = null;
   let sourceNode = null;
@@ -14,37 +13,16 @@
   let mediaStream = null;
   let ready = false;
 
-  // Rolling buffer of the most recent audio, always capturing in the
-  // background so the instant the hotkey fires, the moment just before
-  // it (and any speech that started right as the key went down) is
-  // already on hand instead of being lost to mic/device startup time.
-  let prerollBuffer = new Float32Array(PREROLL_SAMPLES);
-  let prerollWritePos = 0;
-  let prerollFilled = 0;
-
   let recording = false;
   let activeChunks = [];
-
-  function pushToPreroll(input) {
-    for (let i = 0; i < input.length; i++) {
-      prerollBuffer[prerollWritePos] = input[i];
-      prerollWritePos = (prerollWritePos + 1) % PREROLL_SAMPLES;
-      if (prerollFilled < PREROLL_SAMPLES) prerollFilled++;
-    }
-  }
-
-  function snapshotPreroll() {
-    const out = new Float32Array(prerollFilled);
-    const startPos = (prerollWritePos - prerollFilled + PREROLL_SAMPLES) % PREROLL_SAMPLES;
-    for (let i = 0; i < prerollFilled; i++) {
-      out[i] = prerollBuffer[(startPos + i) % PREROLL_SAMPLES];
-    }
-    return out;
-  }
 
   // Mic + processing graph is created once, immediately, and kept alive
   // for the app's lifetime so recordings never pay device-acquisition
   // latency; start()/stop() just toggle whether audio is retained.
+  // (An earlier version also kept a rolling pre-roll buffer to catch
+  // speech starting right at the hotkey press, but that ended up
+  // capturing whatever unrelated audio happened just before the key was
+  // pressed too, so it was removed.)
   async function initAudio() {
     if (ready) return;
     try {
@@ -54,8 +32,7 @@
           // No speaker output is ever routed back (muteGain silences the
           // loop), so echo cancellation has nothing to cancel and can
           // only attenuate the signal. Noise suppression is skipped too:
-          // it tends to shave off quiet/breathy speech onsets, which is
-          // exactly what was getting lost.
+          // it tends to shave off quiet/breathy speech onsets.
           echoCancellation: false,
           noiseSuppression: false,
           autoGainControl: true,
@@ -71,12 +48,9 @@
       muteGain.gain.value = 0;
 
       processorNode.onaudioprocess = (event) => {
+        if (!recording) return;
         const input = event.inputBuffer.getChannelData(0);
-        if (recording) {
-          activeChunks.push(new Float32Array(input));
-        } else {
-          pushToPreroll(input);
-        }
+        activeChunks.push(new Float32Array(input));
       };
 
       sourceNode.connect(processorNode);
@@ -93,20 +67,21 @@
     if (recording) return;
     if (!ready) await initAudio();
     if (!ready) return;
-    activeChunks = [snapshotPreroll()];
+    activeChunks = [];
     recording = true;
   }
 
-  // Boosts quiet recordings up to a healthy peak level so soft speech
-  // is recognized as reliably as loud speech, without blowing up pure
-  // silence/noise into a wall of amplified hiss.
+  // Gently boosts clearly-quiet recordings so soft speech is picked up
+  // more reliably. Kept conservative (small max gain, a silence floor
+  // below which nothing is touched) so background noise doesn't get
+  // amplified into something whisper.cpp mistakes for speech.
   function normalizePeak(samples) {
     let peak = 0;
     for (let i = 0; i < samples.length; i++) {
       const a = Math.abs(samples[i]);
       if (a > peak) peak = a;
     }
-    if (peak < 0.01) return samples; // effectively silent, leave as-is
+    if (peak < SILENCE_PEAK) return samples; // too quiet to safely boost
     const gain = Math.min(TARGET_PEAK / peak, MAX_GAIN);
     if (gain <= 1.05) return samples; // already loud enough
     for (let i = 0; i < samples.length; i++) samples[i] *= gain;
