@@ -27,9 +27,24 @@ jobs:
 
       - name: Download whisper.cpp (Windows CLI binaries)
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           New-Item -ItemType Directory -Force -Path resources/whisper/bin | Out-Null
-          Invoke-WebRequest -Uri "https://github.com/ggml-org/whisper.cpp/releases/latest/download/whisper-bin-x64.zip" -OutFile whisper-bin.zip
+
+          # Don't rely on "latest" pointing at a release that already has its
+          # assets attached -- a release is briefly tag-only right after it's
+          # cut, before its own CI finishes uploading zips, which 404s here.
+          # Instead, walk releases newest-first and use the first one that
+          # actually contains whisper-bin-x64.zip.
+          $headers = @{ "User-Agent" = "voice-input-app-ci"; Authorization = "Bearer $env:GH_TOKEN" }
+          $releases = Invoke-RestMethod -Uri "https://api.github.com/repos/ggml-org/whisper.cpp/releases?per_page=15" -Headers $headers
+          $release = $releases | Where-Object { $_.assets.name -contains "whisper-bin-x64.zip" } | Select-Object -First 1
+          if (-not $release) { throw "No recent whisper.cpp release contains whisper-bin-x64.zip" }
+          $asset = $release.assets | Where-Object { $_.name -eq "whisper-bin-x64.zip" }
+          Write-Host "Using whisper.cpp release $($release.tag_name)"
+          Invoke-WebRequest -Uri $asset.browser_download_url -OutFile whisper-bin.zip
+
           Expand-Archive -Path whisper-bin.zip -DestinationPath whisper-bin-extracted -Force
           Get-ChildItem -Path whisper-bin-extracted -Recurse -Include *.exe,*.dll |
             Copy-Item -Destination resources/whisper/bin -Force
