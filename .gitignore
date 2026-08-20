@@ -1,0 +1,11 @@
+node_modules/
+dist/
+out/
+*.log
+
+# Downloaded at CI build time (whisper.cpp binaries + speech model);
+# not committed because they are large third-party binary artifacts.
+resources/whisper/bin/*
+resources/whisper/models/*
+!resources/whisper/bin/.gitkeep
+!resources/whisper/models/.gitkeep

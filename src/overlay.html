@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    overflow: hidden;
+    font-family: "Segoe UI", "Yu Gothic", sans-serif;
+    -webkit-app-region: no-drag;
+    user-select: none;
+  }
+  #pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    background: rgba(20, 22, 40, 0.92);
+    color: #eef0fb;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    border: 1px solid rgba(255,255,255,0.08);
+    white-space: nowrap;
+  }
+  #dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #ff5c6c;
+    animation: pulse 1s infinite;
+  }
+  #dot.processing { background: #6c8bff; animation: spin 1s linear infinite; }
+  #dot.done { background: #4ade80; animation: none; }
+  #dot.error { background: #ff5c6c; animation: none; }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,92,108,0.5); }
+    50% { box-shadow: 0 0 0 6px rgba(255,92,108,0); }
+  }
+  @keyframes spin {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(0.7); opacity: 0.5; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+</style>
+</head>
+<body>
+  <div id="pill"><span id="dot"></span><span id="label">録音中...</span></div>
+  <script>
+    const { ipcRenderer } = require("electron");
+    const dot = document.getElementById("dot");
+    const label = document.getElementById("label");
+    ipcRenderer.on("overlay:status", (_e, { text, state }) => {
+      label.textContent = text;
+      dot.className = state || "";
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+name: Build Windows Installer
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      whisper_model:
+        description: "同梱する音声モデル (tiny / base / small / medium)"
+        required: false
+        default: "base"
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download whisper.cpp (Windows CLI binaries)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path resources/whisper/bin | Out-Null
+          Invoke-WebRequest -Uri "https://github.com/ggml-org/whisper.cpp/releases/latest/download/whisper-bin-x64.zip" -OutFile whisper-bin.zip
+          Expand-Archive -Path whisper-bin.zip -DestinationPath whisper-bin-extracted -Force
+          Get-ChildItem -Path whisper-bin-extracted -Recurse -Include *.exe,*.dll |
+            Copy-Item -Destination resources/whisper/bin -Force
+          Get-ChildItem resources/whisper/bin
+
+      - name: Download offline Japanese-capable speech model
+        shell: pwsh
+        env:
+          WHISPER_MODEL: ${{ github.event.inputs.whisper_model || 'base' }}
+        run: |
+          New-Item -ItemType Directory -Force -Path resources/whisper/models | Out-Null
+          $model = "ggml-$env:WHISPER_MODEL.bin"
+          Invoke-WebRequest -Uri "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/$model" -OutFile "resources/whisper/models/$model"
+          Get-Item "resources/whisper/models/$model" | Select-Object Name, Length
+
+      - name: Build NSIS installer
+        run: npm run dist
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: voice-input-app-windows-installer
+          path: dist/*.exe
+          if-no-files-found: error

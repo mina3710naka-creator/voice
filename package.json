@@ -1,0 +1,51 @@
+{
+  "name": "voice-input-app",
+  "version": "1.0.0",
+  "description": "Ctrl+Shiftを押しながら話すと、オフラインの音声認識でテキストを整形し、フォーカス中のテキストボックスに自動入力するWindows常駐アプリ",
+  "author": "kirito.nakano",
+  "license": "MIT",
+  "private": true,
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win --x64",
+    "pack": "electron-builder --dir"
+  },
+  "devDependencies": {
+    "electron": "^43.4.1",
+    "electron-builder": "^26.15.3"
+  },
+  "dependencies": {
+    "uiohook-napi": "^1.5.5"
+  },
+  "build": {
+    "appId": "com.kiritonakano.voiceinputapp",
+    "productName": "音声入力アプリ",
+    "asar": true,
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "package.json",
+      "!**/*.map"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/whisper",
+        "to": "whisper",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "音声入力アプリ"
+    }
+  }
+}

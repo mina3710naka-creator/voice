@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>設定 - 音声入力アプリ</title>
+<style>
+  :root {
+    --bg: #12152a; --panel: #1a1e33; --border: #2c3154;
+    --text: #eef0fb; --muted: #9aa0c3; --accent: #6c8bff; --danger: #ff5c6c; --ok: #4ade80;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: "Segoe UI", "Yu Gothic", sans-serif; padding: 20px;
+  }
+  h1 { font-size: 1.1rem; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 0.8rem; margin: 0 0 18px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px; margin-bottom: 14px;
+  }
+  .card h2 { font-size: 0.92rem; margin: 0 0 10px; }
+  .row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 0.85rem; }
+  .row label { flex: 1; }
+  input[type=text] {
+    width: 100%; background: #0e1122; border: 1px solid var(--border); color: var(--text);
+    border-radius: 6px; padding: 7px 9px; font-size: 0.82rem;
+  }
+  input[type=number] {
+    width: 80px; background: #0e1122; border: 1px solid var(--border); color: var(--text);
+    border-radius: 6px; padding: 7px 9px;
+  }
+  .path-row { display: flex; gap: 6px; }
+  .path-row input { flex: 1; }
+  button {
+    background: #262b4a; color: var(--text); border: 1px solid #3a3f66; border-radius: 7px;
+    padding: 7px 12px; cursor: pointer; font-size: 0.82rem;
+  }
+  button:hover { background: #323863; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #0e1122; font-weight: 600; }
+  .status-line { font-size: 0.8rem; margin-top: 8px; }
+  .ok { color: var(--ok); }
+  .bad { color: var(--danger); }
+  .hint { font-size: 0.75rem; color: var(--muted); line-height: 1.5; margin-top: 6px; }
+  .footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+</style>
+</head>
+<body>
+  <h1>⚙️ 音声入力アプリ 設定</h1>
+  <p class="sub">Ctrl + Shift を押しながら話すと、フォーカス中のテキストボックスに音声入力されます</p>
+
+  <div class="card">
+    <h2>エンジンの状態</h2>
+    <div id="engineStatus" class="status-line">確認中...</div>
+  </div>
+
+  <div class="card">
+    <h2>音声認識エンジン（上級者向け・通常は変更不要）</h2>
+    <div class="row">
+      <label>whisper-cli.exe のパス</label>
+    </div>
+    <div class="path-row">
+      <input type="text" id="binPath" placeholder="(バンドル版を使用)">
+      <button id="pickBin">参照...</button>
+    </div>
+    <div class="row" style="margin-top:12px;">
+      <label>音声モデル (ggml-*.bin) のパス</label>
+    </div>
+    <div class="path-row">
+      <input type="text" id="modelPath" placeholder="(バンドル版を使用)">
+      <button id="pickModel">参照...</button>
+    </div>
+    <p class="hint">
+      インストーラーに同梱された whisper.cpp を自動的に使用します。より高精度なモデル（例: ggml-small.bin,
+      ggml-medium.bin）に切り替えたい場合のみ、ここでパスを指定してください。
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>動作設定</h2>
+    <div class="row">
+      <label>Windows起動時に自動的に常駐する</label>
+      <input type="checkbox" id="launchAtLogin">
+    </div>
+    <div class="row">
+      <label>フィラー語（えー・あの・なんか等）を自動除去する</label>
+      <input type="checkbox" id="cleanupFillers">
+    </div>
+    <div class="row">
+      <label>最大録音秒数（安全装置）</label>
+      <input type="number" id="maxSeconds" min="5" max="300">
+    </div>
+  </div>
+
+  <div class="footer">
+    <button id="closeBtn">閉じる</button>
+    <button id="saveBtn" class="primary">保存</button>
+  </div>
+
+  <script src="settings.js"></script>
+</body>
+</html>
