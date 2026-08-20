@@ -64,6 +64,12 @@ function transcribe(wavBuffer, settings, { timeoutMs = 90000 } = {}) {
       // instead of being transcribed into invented words.
       "-nf",
       "-nth", "0.75",
+      // Greedy decoding: at each step, take only the single highest-
+      // probability candidate instead of exploring multiple beams
+      // (default beam-size is 5, i.e. it tracks 5 candidate sequences in
+      // parallel before picking one). This is both much faster and
+      // matches "always use the top conversion candidate".
+      "-bs", "1",
     ];
 
     // Biases recognition toward specific spellings (most useful for
