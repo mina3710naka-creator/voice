@@ -5,6 +5,7 @@ const { uIOhook, UiohookKey } = require("uiohook-napi");
 const store = require("./store");
 const { cleanTranscript } = require("./textCleanup");
 const whisperEngine = require("./whisperEngine");
+const whisperServer = require("./whisperServer");
 const { pasteText } = require("./paste");
 
 if (!app.requestSingleInstanceLock()) {
@@ -126,12 +127,20 @@ function openSettingsWindow() {
 ipcMain.handle("settings:get", () => {
   const settings = store.load();
   const engine = whisperEngine.resolveEngine(settings);
-  return { settings, engineReady: engine.ready, usingBundled: engine.usingBundled };
+  return {
+    settings,
+    engineReady: engine.ready,
+    usingBundled: engine.usingBundled,
+    fastModeReady: whisperServer.isReady(),
+  };
 });
 
 ipcMain.handle("settings:save", (_e, values) => {
   const next = store.save(values);
   applyLaunchAtLogin(next.launchAtLogin);
+  // Engine/model may have changed -- restart the resident server so it
+  // picks up the new model instead of continuing to serve the old one.
+  whisperServer.restart(next).catch(() => {});
   return next;
 });
 
@@ -193,7 +202,9 @@ function stopRecording() {
 ipcMain.on("rec:data", async (_e, wavBuffer) => {
   try {
     const settings = store.load();
-    const rawText = await whisperEngine.transcribe(wavBuffer, settings);
+    const rawText = whisperServer.isReady()
+      ? await whisperServer.transcribe(wavBuffer, settings)
+      : await whisperEngine.transcribe(wavBuffer, settings);
     const finalText = settings.cleanupFillers ? cleanTranscript(rawText) : rawText.trim();
 
     if (finalText) {
@@ -280,6 +291,11 @@ app.whenReady().then(() => {
   const engine = whisperEngine.resolveEngine(settings);
   if (!engine.ready) {
     openSettingsWindow();
+  } else {
+    // Best-effort: if this fails to start (e.g. custom bin path without
+    // whisper-server.exe alongside it), transcription just falls back to
+    // spawning whisper-cli per request.
+    whisperServer.start(settings).catch(() => {});
   }
 
   setupGlobalHotkey();
@@ -292,6 +308,7 @@ app.on("window-all-closed", (e) => {
 
 app.on("before-quit", () => {
   try { uIOhook.stop(); } catch { /* already stopped */ }
+  whisperServer.stop();
 });
 
 app.on("second-instance", () => {

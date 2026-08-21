@@ -38,6 +38,12 @@ function resolveEngine(settings) {
   return { binPath, modelPath, ready, usingBundled };
 }
 
+// Use all available cores (capped, since whisper.cpp sees diminishing
+// returns and excessive thread counts can add scheduling overhead).
+function threadCount() {
+  return Math.max(1, Math.min(os.cpus().length || 4, 8));
+}
+
 function transcribe(wavBuffer, settings, { timeoutMs = 90000 } = {}) {
   return new Promise((resolve, reject) => {
     const { binPath, modelPath, ready } = resolveEngine(settings);
@@ -70,6 +76,7 @@ function transcribe(wavBuffer, settings, { timeoutMs = 90000 } = {}) {
       // parallel before picking one). This is both much faster and
       // matches "always use the top conversion candidate".
       "-bs", "1",
+      "-t", String(threadCount()),
     ];
 
     // Biases recognition toward specific spellings (most useful for
@@ -122,4 +129,4 @@ function transcribe(wavBuffer, settings, { timeoutMs = 90000 } = {}) {
   });
 }
 
-module.exports = { resolveEngine, transcribe };
+module.exports = { resolveEngine, transcribe, threadCount };

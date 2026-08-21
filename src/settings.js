@@ -19,8 +19,12 @@
     customVocabularyEl.value = state.settings.customVocabulary || "";
 
     if (state.engineReady) {
+      const speedNote = state.fastModeReady
+        ? "（高速モード: モデルをメモリに常駐中）"
+        : "（起動直後は初回のみ通常速度。しばらくすると高速モードに切り替わります）";
       engineStatusEl.innerHTML =
-        `<span class="ok">✅ 準備完了</span> — ${state.usingBundled ? "同梱の音声認識エンジンを使用中" : "カスタム設定を使用中"}`;
+        `<span class="ok">✅ 準備完了</span> — ${state.usingBundled ? "同梱の音声認識エンジンを使用中" : "カスタム設定を使用中"}<br>` +
+        `<span class="hint" style="margin:0;">${speedNote}</span>`;
     } else {
       engineStatusEl.innerHTML =
         `<span class="bad">⚠️ 音声認識エンジンが見つかりません</span><br>` +
