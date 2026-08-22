@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>タワーディフェンス</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="game-wrap">
+    <header class="hud">
+      <div class="hud-item">💰 <span id="gold">150</span></div>
+      <div class="hud-item">❤️ <span id="lives">20</span></div>
+      <div class="hud-item">🌊 Wave <span id="wave">0</span>/<span id="waveMax">20</span></div>
+      <div class="hud-item">🏆 Score <span id="score">0</span></div>
+      <div class="hud-buttons">
+        <button id="startWaveBtn">▶ ウェーブ開始</button>
+        <button id="speedBtn">2倍速</button>
+        <button id="pauseBtn">一時停止</button>
+      </div>
+    </header>
+
+    <div class="main-area">
+      <canvas id="game" width="720" height="480"></canvas>
+
+      <aside class="panel">
+        <h2>タワーを建てる</h2>
+        <div id="towerShop" class="tower-shop"></div>
+
+        <h2>選択中</h2>
+        <div id="selectionInfo" class="selection-info">
+          <p class="hint">タイルまたはタワーをクリックして選択</p>
+        </div>
+
+        <div id="messageBox" class="message-box" hidden></div>
+      </aside>
+    </div>
+
+    <footer class="footer-hint">
+      空きマスをクリック→タワーを選んで建設。既存タワーをクリックでアップグレード/売却。敵が拠点(右端)に到達するとライフが減ります。
+    </footer>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
